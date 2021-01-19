@@ -6,9 +6,14 @@ using PokerHandSorter.Utilities;
 
 namespace PokerHandSorter.Ranker
 {
+    /// <summary>
+    /// All five cards in consecutive value order, with the same suit
+    /// </summary>
     public class StraightFlush : IRanker
     {
-        public (bool isMatch, int rank, Card highestCard) IsMatch(IHand hand)
+        public int Rank => 9;
+
+        public (bool isMatch, int rank, Card highestCard) IsMatch(Hand hand)
         {
             //hand must be of the same suit for a straight flush
             if (!hand.IsSameSuit)
@@ -16,22 +21,21 @@ namespace PokerHandSorter.Ranker
                 return (false, -1, null);
             }
 
-            //if it is a straight flush, sum will be an arithmetic series
-            //https://en.wikipedia.org/wiki/Arithmetic_progression#:~:text=In%20mathematics,%20an%20arithmetic%20progression%20(AP)%20or%20arithmetic,sequence%205,%207,%209,%2011,%2013,%2015,%20.
-            var expectedStraightSum = MathUtil.ArithmeticSeries(5, hand.SortedDescending.First().Value, 1);
+            //is in series?
+            var cards = hand.CardCollection.ToList();
 
-            //get sum value of current hand
-            var handSum = hand.SortedDescending.Sum(card => card.Value);
-
-            if (handSum == expectedStraightSum)
+            for (int i = 1; i < cards.Count; i++)
             {
-                return (true, Rank, hand.SortedDescending.Last());
+
+                if (cards[i].Value != cards[i - 1].Value + 1)
+                {
+                    //no, not in series
+                    return (false, -1, null);
+                }
             }
 
-            return (false, -1, null);
+            //card collection is sorted. last card has the highest value
+            return (true, Rank, hand.CardCollection.Last());
         }
-
-        public int Rank => 9;
-
     }
 }
